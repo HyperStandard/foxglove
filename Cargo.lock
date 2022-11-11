@@ -1858,6 +1858,7 @@ dependencies = [
  "crossterm 0.25.0",
  "log",
  "serde",
+ "signal-hook",
  "tui 0.19.0",
  "tui-image-rgba-updated",
  "tui-input",
