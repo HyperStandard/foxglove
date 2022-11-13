@@ -1,4 +1,3 @@
-use bevy::prelude::*;
 use std::{
     error::Error,
     io::{self, Stdout},
@@ -30,28 +29,6 @@ struct TerminalData {
     game_closing: bool,
 }
 
-static closing: AtomicBool = AtomicBool::new(false);
-
-fn draw_term(terminal: &mut TerminalData) {
-    terminal.terminal.draw(|f| {
-        let size = f.size();
-        let block = Block::default().title("Block").borders(Borders::ALL);
-        f.render_widget(block, size);
-    });
-}
-
-fn foxloop(mut terminal: ResMut<TerminalData>) {
-    if terminal.game_closing || closing.load(Ordering::Relaxed) {
-        disable_raw_mode();
-        execute!(
-            terminal.terminal.backend_mut(),
-            LeaveAlternateScreen,
-            DisableMouseCapture
-        );
-        terminal.terminal.show_cursor();
-    }
-}
-
 fn main() -> Result<(), io::Error> {
     // setup terminal
     enable_raw_mode()?;
@@ -62,21 +39,16 @@ fn main() -> Result<(), io::Error> {
 
     let mut signals = Signals::new(&[SIGINT])?;
 
-    App::new()
-        //.add_plugins(DefaultPlugins)
-        .insert_resource(TerminalData {
-            terminal: terminal,
-            game_closing: false,
-        })
-        .add_system(foxloop)
-        .run();
-
     thread::spawn(move || {
         for sig in signals.forever() {
-            println!("Received signal {:?}", sig);
-            closing.fetch_or(true, Ordering::Relaxed);
+            if sig == SIGINT {
+                println!("recieved sigint, closing...");
+                std::process::exit(0)
+            }
         }
     });
+
+    //thread::spawn(move)
 
     thread::sleep(Duration::from_millis(30000));
 
